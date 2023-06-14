@@ -1,28 +1,24 @@
 const crypto = require("crypto");
 
-exports.deterministicPartitionKey = (event) => {
-  const TRIVIAL_PARTITION_KEY = "0";
+exports.deterministicPartitionKey = (partitionKey) => {
   const MAX_PARTITION_KEY_LENGTH = 256;
-  let candidate;
+  let candidate = "0";
 
-  if (event) {
-    if (event.partitionKey) {
-      candidate = event.partitionKey;
-    } else {
-      const data = JSON.stringify(event);
-      candidate = crypto.createHash("sha3-512").update(data).digest("hex");
-    }
+  if (partitionKey) {
+    candidate = partitionKey;
+  } else {
+    const data = JSON.stringify({partitionKey});
+    candidate = crypto.createHash("sha3-512").update(data).digest("hex");
   }
 
-  if (candidate) {
-    if (typeof candidate !== "string") {
-      candidate = JSON.stringify(candidate);
-    }
-  } else {
-    candidate = TRIVIAL_PARTITION_KEY;
+  if (typeof candidate !== "string") {
+    candidate = JSON.stringify(candidate);
   }
   if (candidate.length > MAX_PARTITION_KEY_LENGTH) {
     candidate = crypto.createHash("sha3-512").update(candidate).digest("hex");
   }
   return candidate;
 };
+
+// added the default candidate value of "0" and removed the redundant constant definition for TRIVIAL_PARTITION_KEY
+// removed the entire object from function parameter since we only need one attribute of the event object
